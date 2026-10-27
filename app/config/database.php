@@ -1,5 +1,5 @@
 <?php
-// Función ligera para cargar variables desde el archivo .env
+// Carga manual de variables de entorno (compatible con hostings que bloquean putenv)
 function cargarEnv($path) {
     if (!file_exists($path)) {
         return false;
@@ -7,32 +7,24 @@ function cargarEnv($path) {
 
     $lineas = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lineas as $linea) {
-        // Ignorar comentarios
-        if (strpos(trim($linea), '#') === 0) {
-            continue;
-        }
+        $lineaTrim = trim($linea);
+        if (strpos($lineaTrim, '#') === 0 || empty($lineaTrim)) continue;
+        if (strpos($linea, '=') === false) continue;
 
         list($nombre, $valor) = explode('=', $linea, 2);
-        $nombre = trim($nombre);
-        $valor = trim($valor);
-
-        if (!array_key_exists($nombre, $_SERVER) && !array_key_exists($nombre, $_ENV)) {
-            putenv(sprintf('%s=%s', $nombre, $valor));
-            $_ENV[$nombre] = $valor;
-            $_SERVER[$nombre] = $valor;
-        }
+        $_ENV[trim($nombre)] = trim($valor);
+        $_SERVER[trim($nombre)] = trim($valor);
     }
 }
 
-// Cargar el archivo .env desde la raíz del proyecto
+// Cargar .env desde la raíz del proyecto
 cargarEnv(__DIR__ . '/../../.env');
 
-// Obtener credenciales desde las variables de entorno
-$host     = getenv('DB_HOST') ?: 'localhost';
-$db       = getenv('DB_NAME') ?: 'servicios_db';
-$user     = getenv('DB_USER') ?: 'root';
-$pass     = getenv('DB_PASS') ?: '';
-$charset  = 'utf8mb4';
+$host    = $_ENV['DB_HOST'] ?? 'localhost';
+$db      = $_ENV['DB_NAME'] ?? 'servicios_db';
+$user    = $_ENV['DB_USER'] ?? 'root';
+$pass    = $_ENV['DB_PASS'] ?? '';
+$charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
@@ -44,6 +36,6 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    throw new \PDOException($e->getMessage(), (int)$e->getCode());
+    die("❌ Error de conexión a la Base de Datos: " . $e->getMessage());
 }
 ?>

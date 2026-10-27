@@ -1,0 +1,11 @@
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Si la petición no es un archivo ni carpeta física existente
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    # Procesar la URL mediante el Front Controller
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>

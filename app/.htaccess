@@ -1,0 +1,2 @@
+# Bloquear cualquier acceso HTTP directo a los archivos internos
+Deny from all

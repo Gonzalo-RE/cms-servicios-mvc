@@ -8,31 +8,23 @@ class ServicioController {
         $this->servicioModel = new Servicio($pdo);
     }
 
-    // Verificar si el usuario autenticado tiene rol de Administrador (RBAC)
-    private function esAdmin() {
-        return isset($_SESSION['usuario_rol']) && $_SESSION['usuario_rol'] === 'admin';
-    }
-
-    // 1. Mostrar la lista general de servicios
     public function index() {
         $servicios = $this->servicioModel->obtenerTodos();
+        $tituloPagina = 'Panel de Servicios | Apple Minimalist';
+        require_once __DIR__ . '/../views/templates/header.php';
         require_once __DIR__ . '/../views/servicios/index.php';
+        require_once __DIR__ . '/../views/templates/footer.php';
     }
 
-    // 2. Crear servicio (Solo Admin + Protección CSRF)
     public function crear() {
-        if (!$this->esAdmin()) {
-            header("Location: index.php?action=index");
-            exit;
+        if (($_SESSION['usuario_rol'] ?? '') !== 'admin') {
+            die("❌ Acceso Denegado: No tienes permisos para crear servicios.");
         }
 
-        $mensaje = "";
-        $tipoMensaje = "";
-
+        $error = '';
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $token = $_POST['csrf_token'] ?? '';
-            if (!verificarCSRFToken($token)) {
-                die("❌ Error de seguridad: Petición no autorizada (CSRF Token inválido).");
+            if (!verificarCSRFToken($_POST['csrf_token'] ?? '')) {
+                die("❌ Error de seguridad: Token CSRF inválido.");
             }
 
             $nombre = trim($_POST['nombre'] ?? '');
@@ -40,85 +32,67 @@ class ServicioController {
             $precio = (float)($_POST['precio'] ?? 0);
 
             if (!empty($nombre) && !empty($descripcion) && $precio > 0) {
-                if ($this->servicioModel->crear($nombre, $descripcion, $precio)) {
-                    $mensaje = "✅ Servicio registrado correctamente.";
-                    $tipoMensaje = "exito";
-                } else {
-                    $mensaje = "❌ Error al guardar el servicio.";
-                    $tipoMensaje = "error";
-                }
+                $this->servicioModel->crear($nombre, $descripcion, $precio);
+                header("Location: index.php?action=index");
+                exit;
             } else {
-                $mensaje = "⚠️ Por favor, llena todos los campos correctamente.";
-                $tipoMensaje = "error";
+                $error = "⚠️ Por favor completa todos los campos correctamente.";
             }
         }
 
+        $tituloPagina = 'Crear Servicio';
+        require_once __DIR__ . '/../views/templates/header.php';
         require_once __DIR__ . '/../views/servicios/crear.php';
+        require_once __DIR__ . '/../views/templates/footer.php';
     }
 
-    // 3. Editar servicio (Solo Admin + Protección CSRF)
     public function editar() {
-        if (!$this->esAdmin()) {
-            header("Location: index.php?action=index");
-            exit;
+        if (($_SESSION['usuario_rol'] ?? '') !== 'admin') {
+            die("❌ Acceso Denegado: No tienes permisos para editar servicios.");
         }
 
-        $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
-
-        if ($id <= 0) {
-            header("Location: index.php?action=index");
-            exit;
-        }
-
-        $mensaje = "";
-        $tipoMensaje = "";
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $token = $_POST['csrf_token'] ?? '';
-            if (!verificarCSRFToken($token)) {
-                die("❌ Error de seguridad: Petición no autorizada (CSRF Token inválido).");
-            }
-
-            $nombre = trim($_POST['nombre'] ?? '');
-            $descripcion = trim($_POST['descripcion'] ?? '');
-            $precio = (float)($_POST['precio'] ?? 0);
-
-            if (!empty($nombre) && !empty($descripcion) && $precio > 0) {
-                if ($this->servicioModel->actualizar($id, $nombre, $descripcion, $precio)) {
-                    $mensaje = "✅ Servicio actualizado correctamente.";
-                    $tipoMensaje = "exito";
-                } else {
-                    $mensaje = "❌ Error al actualizar el servicio.";
-                    $tipoMensaje = "error";
-                }
-            } else {
-                $mensaje = "⚠️ Por favor, llena todos los campos correctamente.";
-                $tipoMensaje = "error";
-            }
-        }
-
+        $id = (int)($_GET['id'] ?? 0);
         $servicio = $this->servicioModel->obtenerPorId($id);
+
         if (!$servicio) {
             header("Location: index.php?action=index");
             exit;
         }
 
+        $error = '';
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!verificarCSRFToken($_POST['csrf_token'] ?? '')) {
+                die("❌ Error de seguridad: Token CSRF inválido.");
+            }
+
+            $nombre = trim($_POST['nombre'] ?? '');
+            $descripcion = trim($_POST['descripcion'] ?? '');
+            $precio = (float)($_POST['precio'] ?? 0);
+
+            if (!empty($nombre) && !empty($descripcion) && $precio > 0) {
+                $this->servicioModel->actualizar($id, $nombre, $descripcion, $precio);
+                header("Location: index.php?action=index");
+                exit;
+            } else {
+                $error = "⚠️ Todos los campos son obligatorios.";
+            }
+        }
+
+        $tituloPagina = 'Editar Servicio';
+        require_once __DIR__ . '/../views/templates/header.php';
         require_once __DIR__ . '/../views/servicios/editar.php';
+        require_once __DIR__ . '/../views/templates/footer.php';
     }
 
-    // 4. Eliminar servicio (Solo Admin)
     public function eliminar() {
-        if (!$this->esAdmin()) {
-            header("Location: index.php?action=index");
-            exit;
+        if (($_SESSION['usuario_rol'] ?? '') !== 'admin') {
+            die("❌ Acceso Denegado: No tienes permisos para eliminar servicios.");
         }
 
         $id = (int)($_GET['id'] ?? 0);
-
         if ($id > 0) {
             $this->servicioModel->eliminar($id);
         }
-
         header("Location: index.php?action=index");
         exit;
     }

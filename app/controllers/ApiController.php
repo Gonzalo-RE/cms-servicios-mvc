@@ -8,54 +8,64 @@ class ApiController {
         $this->servicioModel = new Servicio($pdo);
     }
 
-    // Endpoint GET: Listar todos los servicios en JSON
-    public function listarServicios() {
-        header("Content-Type: application/json; charset=utf-8");
+    private function setHeaders() {
         header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+        header("Content-Type: application/json; charset=utf-8");
+    }
 
+    public function listarServicios() {
+        $this->setHeaders();
         try {
             $servicios = $this->servicioModel->obtenerTodos();
-
-            http_response_code(200);
             echo json_encode([
-                "status" => "success",
-                "total"  => count($servicios),
-                "data"   => $servicios
+                'status' => 'success',
+                'total'  => count($servicios),
+                'data'   => $servicios
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        } catch (\PDOException $e) {
+        } catch (Exception $e) {
             http_response_code(500);
             echo json_encode([
-                "status"  => "error",
-                "mensaje" => "Error al obtener los datos de la base de datos."
+                'status'  => 'error',
+                'message' => 'Error en el servidor al obtener servicios'
             ]);
         }
         exit;
     }
 
-    // Endpoint GET: Obtener un servicio específico por ID en JSON
     public function detalleServicio($id) {
-        header("Content-Type: application/json; charset=utf-8");
-        header("Access-Control-Allow-Origin: *");
-
+        $this->setHeaders();
         $id = (int)$id;
-
         if ($id <= 0) {
             http_response_code(400);
-            echo json_encode(["status" => "error", "mensaje" => "ID de servicio no válido."]);
+            echo json_encode([
+                'status'  => 'error',
+                'message' => 'ID de servicio no válido'
+            ]);
             exit;
         }
 
-        $servicio = $this->servicioModel->obtenerPorId($id);
-
-        if ($servicio) {
-            http_response_code(200);
+        try {
+            $servicio = $this->servicioModel->obtenerPorId($id);
+            if ($servicio) {
+                echo json_encode([
+                    'status' => 'success',
+                    'data'   => $servicio
+                ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'status'  => 'error',
+                    'message' => 'Servicio no encontrado'
+                ]);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
             echo json_encode([
-                "status" => "success",
-                "data"   => $servicio
-            ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-        } else {
-            http_response_code(404);
-            echo json_encode(["status" => "error", "mensaje" => "Servicio no encontrado."]);
+                'status'  => 'error',
+                'message' => 'Error interno en el servidor'
+            ]);
         }
         exit;
     }

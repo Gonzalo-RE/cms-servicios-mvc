@@ -1,0 +1,11 @@
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Evitar bucle si la petición ya apunta a la carpeta /public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    # Redirigir todo el tráfico a public/ manteniendo los parámetros GET
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>

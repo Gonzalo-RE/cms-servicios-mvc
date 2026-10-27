@@ -1,19 +1,12 @@
-<?php 
-$tituloPagina = "Editar Servicio #" . $servicio['id'] . " | MVC";
-require_once __DIR__ . '/../templates/header.php'; 
-?>
+<h1>Editar Servicio</h1>
 
-<div class="contenedor" style="max-width: 500px;">
-    <h2>Editar Servicio #<?php echo $servicio['id']; ?></h2>
+<?php if (!empty($error)): ?>
+    <div class="error"><?php echo $error; ?></div>
+<?php endif; ?>
 
-    <?php if (!empty($mensaje)): ?>
-        <div class="<?php echo $tipoMensaje; ?>"><?php echo $mensaje; ?></div>
-    <?php endif; ?>
-
-    <form action="index.php?action=editar" method="POST">
-        <!-- Token CSRF Oculto e ID del Servicio -->
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form action="index.php?action=editar&id=<?php echo $servicio['id']; ?>" method="POST">
         <input type="hidden" name="csrf_token" value="<?php echo generarCSRFToken(); ?>">
-        <input type="hidden" name="id" value="<?php echo $servicio['id']; ?>">
 
         <div class="campo">
             <label for="nombre">Nombre del Servicio:</label>
@@ -22,18 +15,18 @@ require_once __DIR__ . '/../templates/header.php';
 
         <div class="campo">
             <label for="descripcion">Descripción:</label>
-            <textarea id="descripcion" name="descripcion" rows="3" required><?php echo htmlspecialchars($servicio['descripcion']); ?></textarea>
+            <textarea id="descripcion" name="descripcion" rows="4" required><?php echo htmlspecialchars($servicio['descripcion']); ?></textarea>
         </div>
 
         <div class="campo">
             <label for="precio">Precio (MXN):</label>
-            <input type="number" step="0.01" id="precio" name="precio" value="<?php echo $servicio['precio']; ?>" required>
+            <input type="number" step="0.01" id="precio" name="precio" value="<?php echo htmlspecialchars($servicio['precio']); ?>" required>
         </div>
 
-        <button type="submit">Actualizar Cambios</button>
+        <button type="submit">Actualizar Servicio</button>
     </form>
-
-    <a href="index.php?action=index" class="link-volver">← Volver al Panel de Servicios</a>
 </div>
 
-<?php require_once __DIR__ . '/../templates/footer.php'; ?>
+<div style="text-align: center;">
+    <a href="index.php?action=index" class="link-volver">← Volver al Panel</a>
+</div>
