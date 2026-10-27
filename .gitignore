@@ -1,0 +1,8 @@
+# Archivos de configuración local y credenciales
+.env
+
+# Archivos de sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
